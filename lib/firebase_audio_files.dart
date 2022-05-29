@@ -12,9 +12,6 @@ class FirebaseAudio {
 
   Future<String> _getAudioFromString(String filePath) async {
     final pathReference = storageRef.child(filePath);
-    print("path ref: ${pathReference.fullPath}");
-    print("path ref2: ${await pathReference.getDownloadURL()}");
-
     return pathReference.getDownloadURL();
   }
 

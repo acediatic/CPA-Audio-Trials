@@ -29,7 +29,6 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
     setState(() {
       randomNumber = Random().nextInt(maxRandomInt);
       saFileName = "${formatNumber(randomNumber)}SA.mp3";
-      print(saFileName);
     });
   }
 
