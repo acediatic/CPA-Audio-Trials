@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:audioplayers/audioplayers.dart';
 import "package:flutter/material.dart";
 import 'show_error.dart';
+import 'package:collection/collection.dart';
 
 class AudioSpeedTrialPage extends StatefulWidget {
   const AudioSpeedTrialPage({Key? key}) : super(key: key);
@@ -20,6 +21,7 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   bool isRunning = false;
   AudioPlayer audioPlayer = AudioPlayer();
   FirebaseAudio firebaseAudio = FirebaseAudio();
+  List<int> log = [];
 
   String formatNumber(int number) {
     return NumberFormat("000", 'en_US').format(number);
@@ -33,6 +35,10 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   }
 
   void startSearch() {
+    if (randomNumber == 0) {
+      updateRandomNumber();
+    }
+    audioPlayer.stop();
     stopwatch.reset();
     stopwatch.start();
     setState(() {
@@ -40,6 +46,7 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
     });
 
     firebaseAudio.getSAudioFromPath(saFileName).then((audioUrl) {
+      log.add(stopwatch.elapsedMilliseconds);
       return audioPlayer.play(audioUrl);
     }).catchError((e) {
       showError(context, e.toString());
@@ -96,10 +103,13 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
                     color: Colors.white,
                     border: Border.all(color: Colors.black),
                   ),
-                  child: SearchStopwatch(time: stopwatch.elapsedMilliseconds),
+                  child: SearchStopwatch(
+                      time: log.isNotEmpty ? log[log.length - 1] : 0),
                 ),
               ],
             ),
+            Text(
+                "Average: ${log.isNotEmpty ? (log.sum / log.length).toStringAsFixed(2) : "N/A"}"),
             FractionallySizedBox(
               widthFactor: 0.8,
               child: Container(
