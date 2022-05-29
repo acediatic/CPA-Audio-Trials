@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cpa_demo_app/stopwatch.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:intl/intl.dart';
@@ -51,7 +54,10 @@ class AudioSpeedTrialPage extends StatefulWidget {
 
 class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   static const maxRandomInt = 637;
-  int randomNumber = Random().nextInt(maxRandomInt);
+  int randomNumber = 0;
+  String saFileName = "";
+  Stopwatch stopwatch = Stopwatch();
+  bool isRunning = false;
 
   String formatNumber(int number) {
     return NumberFormat("000", 'en_US').format(number);
@@ -60,6 +66,22 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   void updateRandomNumber() {
     setState(() {
       randomNumber = Random().nextInt(maxRandomInt);
+      saFileName = formatNumber(randomNumber) + "SA.mp3";
+    });
+  }
+
+  void startSearch() {
+    stopwatch.reset();
+    stopwatch.start();
+    setState(() {
+      isRunning = true;
+    });
+  }
+
+  void endSearch() {
+    stopwatch.stop();
+    setState(() {
+      isRunning = false;
     });
   }
 
@@ -90,9 +112,28 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
                 ],
               ),
             ),
-            TextButton(
-              onPressed: () => {},
-              child: const Text("Begin Search"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () => {
+                    startSearch(),
+                    endSearch(),
+                  },
+                  child: const Text("Begin Search"),
+                  style: TextButton.styleFrom(
+                    backgroundColor:
+                        isRunning ? Colors.yellow : Colors.transparent,
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.black),
+                  ),
+                  child: SearchStopwatch(time: stopwatch.elapsedMilliseconds),
+                ),
+              ],
             ),
             FractionallySizedBox(
               widthFactor: 0.8,
@@ -101,9 +142,11 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
                   color: Colors.white,
                   border: Border.all(color: Colors.black),
                 ),
-                child: const Text(
-                  "Audio file: " "<formatted int>" "SA",
-                  style: TextStyle(fontSize: 25),
+                child: Center(
+                  child: Text(
+                    "Audio file: " + saFileName,
+                    style: const TextStyle(fontSize: 25),
+                  ),
                 ),
               ),
             ),
