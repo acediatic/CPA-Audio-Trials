@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "86473586442",
+    "project_id": "cross-platform-audio",
+    "storage_bucket": "cross-platform-audio.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:86473586442:android:3dbc4643eabfb15d46acf3",
+        "android_client_info": {
+          "package_name": "com.example.cpa_demo_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "86473586442-fkisim6leqkp0uepuf5r62sa4u14b3dd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.cpa_demo_app",
+            "certificate_hash": "e04aff2386ad31d932725505a8fd592ec1bdc015"
+          }
+        },
+        {
+          "client_id": "86473586442-jst8a5onv8spv74e26045kflmdl3i3uj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuJf-RPN6mSgt5M5jK0ayHm1Kr2Bmg-nc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "86473586442-jst8a5onv8spv74e26045kflmdl3i3uj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "86473586442-a7dsuoio45lvgq7ua5s9cfbraonje71d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.cpaDemoApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
