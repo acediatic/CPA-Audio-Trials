@@ -109,7 +109,7 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
               ],
             ),
             Text(
-                "Average: ${log.isNotEmpty ? (log.sum / log.length).toStringAsFixed(2) : "N/A"}"),
+                "Average over ${log.length} runs: ${log.isNotEmpty ? "${(log.sum / log.length).toStringAsFixed(2)}ms" : "N/A"}"),
             FractionallySizedBox(
               widthFactor: 0.8,
               child: Container(
