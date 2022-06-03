@@ -22,6 +22,7 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   AudioPlayer audioPlayer = AudioPlayer();
   FirebaseAudio firebaseAudio = FirebaseAudio();
   List<int> log = [];
+  bool useFirebase = false;
 
   String formatNumber(int number) {
     return NumberFormat("000", 'en_US').format(number);
@@ -34,6 +35,17 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
     });
   }
 
+  void playFromFirebase() {
+    firebaseAudio.getSAudioFromPath(saFileName).then((audioUrl) {
+      log.add(stopwatch.elapsedMilliseconds);
+      return audioPlayer.play(audioUrl);
+    }).catchError((e) {
+      showError(context, e.toString());
+    }).whenComplete(endSearch);
+  }
+
+  void playFromLocal() {}
+
   void startSearch() {
     if (randomNumber == 0) {
       updateRandomNumber();
@@ -45,12 +57,12 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
       isRunning = true;
     });
 
-    firebaseAudio.getSAudioFromPath(saFileName).then((audioUrl) {
-      log.add(stopwatch.elapsedMilliseconds);
-      return audioPlayer.play(audioUrl);
-    }).catchError((e) {
-      showError(context, e.toString());
-    }).whenComplete(endSearch);
+    if (useFirebase) {
+      playFromFirebase();
+    } else {
+      audioPlayer.play("/assets/$saFileName");
+      endSearch();
+    }
   }
 
   void endSearch() {
@@ -67,7 +79,23 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
-            Text("Source:", style: Theme.of(context).textTheme.headline2),
+            Row(
+              children: [
+                Text("Source:", style: Theme.of(context).textTheme.headline4),
+                ToggleButtons(
+                  isSelected: [!useFirebase, useFirebase],
+                  onPressed: (int index) {
+                    setState(() {
+                      useFirebase = index == 1;
+                    });
+                  },
+                  children: const <Widget>[
+                    Icon(Icons.phone_android),
+                    Icon(Icons.computer)
+                  ],
+                ),
+              ],
+            ),
             FractionallySizedBox(
               widthFactor: 0.8,
               child: Row(

@@ -48,7 +48,7 @@ class _SignInPageState extends State<SignInPage> {
                         builder: (context) => const AudioSpeedTrialPage()),
                   );
                 }).catchError((e) {
-                  showError(context, e);
+                  showError(context, e.toString());
                 });
               },
             ),
