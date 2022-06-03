@@ -15,6 +15,8 @@ class AudioSpeedTrialPage extends StatefulWidget {
 
 class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   static const maxRandomInt = 133;
+  static AudioCache localAudioCache = AudioCache(prefix: "assets/audio/S/");
+
   int randomNumber = 0;
   String saFileName = "";
   Stopwatch stopwatch = Stopwatch();
@@ -36,15 +38,18 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   }
 
   void playFromFirebase() {
+    print("playFromFirebase");
     firebaseAudio.getSAudioFromPath(saFileName).then((audioUrl) {
-      log.add(stopwatch.elapsedMilliseconds);
       return audioPlayer.play(audioUrl);
     }).catchError((e) {
       showError(context, e.toString());
-    }).whenComplete(endSearch);
+    });
   }
 
-  void playFromLocal() {}
+  void playFromLocal() async {
+    print("playFromLocal");
+    audioPlayer = await localAudioCache.play(saFileName);
+  }
 
   void startSearch() {
     if (randomNumber == 0) {
@@ -57,12 +62,10 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
       isRunning = true;
     });
 
-    if (useFirebase) {
-      playFromFirebase();
-    } else {
-      audioPlayer.play("/assets/$saFileName");
-      endSearch();
-    }
+    useFirebase ? playFromFirebase() : playFromLocal();
+
+    log.add(stopwatch.elapsedMilliseconds);
+    endSearch();
   }
 
   void endSearch() {
