@@ -37,18 +37,22 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
     });
   }
 
-  void playFromFirebase() {
+  void playFromFirebase() async {
     print("playFromFirebase");
-    firebaseAudio.getSAudioFromPath(saFileName).then((audioUrl) {
-      return audioPlayer.play(audioUrl);
-    }).catchError((e) {
+    String audioURL =
+        await firebaseAudio.getSAudioFromPath(saFileName).catchError((e) {
       showError(context, e.toString());
     });
+    log.add(stopwatch.elapsedMicroseconds);
+    audioPlayer.play(audioURL);
+    endSearch();
   }
 
   void playFromLocal() async {
     print("playFromLocal");
+    log.add(stopwatch.elapsedMicroseconds);
     audioPlayer = await localAudioCache.play(saFileName);
+    endSearch();
   }
 
   void startSearch() {
@@ -63,9 +67,6 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
     });
 
     useFirebase ? playFromFirebase() : playFromLocal();
-
-    log.add(stopwatch.elapsedMilliseconds);
-    endSearch();
   }
 
   void endSearch() {
@@ -89,6 +90,7 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
                   isSelected: [!useFirebase, useFirebase],
                   onPressed: (int index) {
                     setState(() {
+                      log = [];
                       useFirebase = index == 1;
                     });
                   },
@@ -140,7 +142,7 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
               ],
             ),
             Text(
-                "Average over ${log.length} runs: ${log.isNotEmpty ? "${(log.sum / log.length).toStringAsFixed(2)}ms" : "N/A"}"),
+                "Average over ${log.length} runs: ${log.isNotEmpty ? "${(log.sum / log.length).toStringAsFixed(2)}μs" : "N/A"}"),
             FractionallySizedBox(
               widthFactor: 0.8,
               child: Container(
