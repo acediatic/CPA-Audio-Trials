@@ -1,7 +1,5 @@
 import 'package:cpa_demo_app/firebase_audio_files.dart';
 import 'package:cpa_demo_app/stopwatch.dart';
-import 'dart:math';
-import 'package:intl/intl.dart';
 import 'package:audioplayers/audioplayers.dart';
 import "package:flutter/material.dart";
 import 'show_error.dart';
@@ -14,7 +12,6 @@ class AudioSpeedTrialPage extends StatefulWidget {
 }
 
 class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
-  static const maxRandomInt = 133;
   static AudioCache localAudioCache = AudioCache(prefix: "assets/audio/S/");
 
   int randomNumber = 0;
@@ -25,17 +22,6 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   FirebaseAudio firebaseAudio = FirebaseAudio();
   List<int> log = [];
   bool useFirebase = false;
-
-  String formatNumber(int number) {
-    return NumberFormat("000", 'en_US').format(number);
-  }
-
-  void updateRandomNumber() {
-    setState(() {
-      randomNumber = Random().nextInt(maxRandomInt);
-      saFileName = "${formatNumber(randomNumber)}SA.mp3";
-    });
-  }
 
   void playFromFirebase() async {
     print("playFromFirebase");
@@ -56,9 +42,6 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   }
 
   void startSearch() {
-    if (randomNumber == 0) {
-      updateRandomNumber();
-    }
     audioPlayer.stop();
     stopwatch.reset();
     stopwatch.start();
