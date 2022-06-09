@@ -1,9 +1,6 @@
-import 'package:cpa_demo_app/firebase_audio_files.dart';
-import 'package:cpa_demo_app/stopwatch.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:cpa_demo_app/audio_file_collection.dart';
 import "package:flutter/material.dart";
 import 'show_error.dart';
-import 'package:collection/collection.dart';
 
 class AudioSpeedTrialPage extends StatefulWidget {
   const AudioSpeedTrialPage({Key? key}) : super(key: key);
@@ -12,50 +9,34 @@ class AudioSpeedTrialPage extends StatefulWidget {
 }
 
 class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
-  static AudioCache localAudioCache = AudioCache(prefix: "assets/audio/S/");
+  AudioFileCollection _audioFileCollection = AudioFileCollection.generate();
 
-  int randomNumber = 0;
-  String saFileName = "";
-  Stopwatch stopwatch = Stopwatch();
   bool isRunning = false;
-  AudioPlayer audioPlayer = AudioPlayer();
-  FirebaseAudio firebaseAudio = FirebaseAudio();
-  List<int> log = [];
-  bool useFirebase = false;
+  int _maxLoadTime = 0;
+  int _timeToPlay = 0;
 
-  void playFromFirebase() async {
-    print("playFromFirebase");
-    String audioURL =
-        await firebaseAudio.getSAudioFromPath(saFileName).catchError((e) {
-      showError(context, e.toString());
-    });
-    log.add(stopwatch.elapsedMicroseconds);
-    audioPlayer.play(audioURL);
-    endSearch();
+  void updateTimeToPlay() {
+    updateFunction(int timeToPlay) => setState(() {
+          _timeToPlay = timeToPlay;
+        });
+
+    _audioFileCollection.listenForTimeToPlay(0, updateFunction);
   }
 
-  void playFromLocal() async {
-    print("playFromLocal");
-    log.add(stopwatch.elapsedMicroseconds);
-    audioPlayer = await localAudioCache.play(saFileName);
-    endSearch();
-  }
-
-  void startSearch() {
-    audioPlayer.stop();
-    stopwatch.reset();
-    stopwatch.start();
+  void getLoadTimes() {
     setState(() {
       isRunning = true;
     });
 
-    useFirebase ? playFromFirebase() : playFromLocal();
+    setState(() async {
+      _maxLoadTime = await _audioFileCollection.getMaxLoadTime();
+      isRunning = false;
+    });
   }
 
-  void endSearch() {
-    stopwatch.stop();
+  void _regenerateAudioFileCollection() {
     setState(() {
-      isRunning = false;
+      _audioFileCollection = AudioFileCollection.generate();
     });
   }
 
@@ -66,39 +47,28 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
-            Row(
-              children: [
-                Text("Source:", style: Theme.of(context).textTheme.headline4),
-                ToggleButtons(
-                  isSelected: [!useFirebase, useFirebase],
-                  onPressed: (int index) {
-                    setState(() {
-                      log = [];
-                      useFirebase = index == 1;
-                    });
-                  },
-                  children: const <Widget>[
-                    Icon(Icons.phone_android),
-                    Icon(Icons.computer)
-                  ],
-                ),
-              ],
-            ),
+            Text("Source: Server",
+                style: Theme.of(context).textTheme.headline4),
             FractionallySizedBox(
               widthFactor: 0.8,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   OutlinedButton(
-                      onPressed: updateRandomNumber,
-                      child: const Text("Generate Random Number")),
+                      onPressed: _regenerateAudioFileCollection,
+                      child: const Text("R#")),
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border.all(color: Colors.black),
                     ),
-                    child: Text(formatNumber(randomNumber)),
+                    // displays file name of all files in the collection
+                    child: ListView.builder(
+                        itemCount: _audioFileCollection.fileNames.length,
+                        itemBuilder: (context, index) {
+                          return Text(_audioFileCollection.fileNames[index]);
+                        }),
                   ),
                 ],
               ),
@@ -107,39 +77,32 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
-                  onPressed: startSearch,
+                  onPressed: getLoadTimes,
                   style: TextButton.styleFrom(
                     backgroundColor:
                         isRunning ? Colors.yellow : Colors.transparent,
                   ),
-                  child: const Text("Begin Search"),
+                  child: const Text("Re"),
                 ),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border.all(color: Colors.black),
                   ),
-                  child: SearchStopwatch(
-                      time: log.isNotEmpty ? log[log.length - 1] : 0),
+                  child: Text(
+                      "Max Load Times: ${(_maxLoadTime / 1000).toStringAsFixed(2)}ms"),
                 ),
               ],
             ),
-            Text(
-                "Average over ${log.length} runs: ${log.isNotEmpty ? "${(log.sum / log.length).toStringAsFixed(2)}μs" : "N/A"}"),
-            FractionallySizedBox(
-              widthFactor: 0.8,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.black),
-                ),
-                child: Center(
-                  child: Text(
-                    "Audio file: $saFileName",
-                    style: const TextStyle(fontSize: 25),
-                  ),
-                ),
+            // displays box with time to play audio file
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.black),
               ),
+              child: Text(
+                  "Time to play: ${_timeToPlay.toStringAsFixed(2)} micro seconds."),
             ),
           ],
         ),
