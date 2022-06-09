@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:cpa_demo_app/firebase_audio_files.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +11,7 @@ class AudioFile {
   String downloadURL = "";
   Stopwatch stopwatch = Stopwatch();
   int _loadTime = 0;
+  int _timeToPlay = 0;
 
   AudioFile() {
     _setdownloadUrl();
@@ -19,9 +21,9 @@ class AudioFile {
     downloadURL = await FirebaseAudio().getSAudioFromPath(fileName);
   }
 
-  int get loadTime {
+  Future<int> get loadTime async {
     if (_loadTime == 0) {
-      _timeLoadAudio();
+      await _timeLoadAudio();
     }
     return _loadTime;
   }
@@ -41,6 +43,42 @@ class AudioFile {
 
     print("Is loaded: $_loaded");
     return loadTime;
+  }
+
+  void timeToPlay(Function notificationFn) async {
+    if (_loadTime == 0) {
+      await _timeLoadAudio();
+    }
+
+    if (_timeToPlay != 0) {
+      notificationFn(_timeToPlay);
+      return;
+    }
+
+    void playAudioListener(PlayerState state) {
+      if (state.processingState == ProcessingState.ready) {
+        stopwatch.stop();
+        _timeToPlay = stopwatch.elapsedMicroseconds;
+        notificationFn(_timeToPlay);
+      }
+    }
+
+    audioPlayer.playerStateStream.listen(playAudioListener);
+    stopwatch.reset();
+    stopwatch.start();
+    playAudio();
+  }
+
+  Future<void> playAudio() {
+    return audioPlayer.play();
+  }
+
+  Future<void> stopAudio() {
+    return audioPlayer.stop();
+  }
+
+  void addProcessingStateListener(Function(PlayerState) function) {
+    audioPlayer.playerStateStream.listen(function);
   }
 
   String get fileName => "${_formatNumber(_randomNumber)}SA.mp3";
