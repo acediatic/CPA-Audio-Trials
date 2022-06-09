@@ -12,4 +12,8 @@ class AudioFileCollection {
   List<String> getFileNames() {
     return _audioFiles.map((audioFile) => audioFile.fileName).toList();
   }
+
+  List<int> getLoadTimes() {
+    return _audioFiles.map((audioFile) => audioFile.loadTime).toList();
+  }
 }
