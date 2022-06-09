@@ -7,17 +7,40 @@ class AudioFile {
   static const maxRandomInt = 133;
   final int _randomNumber = Random().nextInt(maxRandomInt);
   final AudioPlayer audioPlayer = AudioPlayer();
-
-  late final String downloadURL;
+  String downloadURL = "";
+  Stopwatch stopwatch = Stopwatch();
+  int _loadTime = 0;
 
   AudioFile() {
     _setdownloadUrl();
   }
 
-  void _setdownloadUrl() {
-    FirebaseAudio().getSAudioFromPath(fileName).then((url) {
-      downloadURL = url;
-    });
+  Future<void> _setdownloadUrl() async {
+    downloadURL = await FirebaseAudio().getSAudioFromPath(fileName);
+  }
+
+  int get loadTime {
+    if (_loadTime == 0) {
+      _timeLoadAudio();
+    }
+    return _loadTime;
+  }
+
+  Future<int> _timeLoadAudio() async {
+    if (downloadURL.isEmpty) {
+      await _setdownloadUrl();
+    }
+
+    stopwatch.reset();
+    stopwatch.start();
+
+    // technically the time taken to get full duration, but a proxy for loading time
+    await audioPlayer.setUrl(downloadURL, preload: true);
+    stopwatch.stop();
+    _loadTime = stopwatch.elapsedMicroseconds;
+
+    print("Is loaded: $_loaded");
+    return loadTime;
   }
 
   String get fileName => "${_formatNumber(_randomNumber)}SA.mp3";
@@ -28,7 +51,7 @@ class AudioFile {
 
   // `true` if the `load()` action has been completed and an audio is currently
   // `loaded` in the audioPlayer
-  bool get loaded =>
+  bool get _loaded =>
       audioPlayer.processingState == ProcessingState.ready ||
       audioPlayer.processingState == ProcessingState.completed ||
       audioPlayer.processingState == ProcessingState.buffering;
