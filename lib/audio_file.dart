@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 
 class AudioFile {
-  static const maxRandomInt = 133;
-  final int _randomNumber = Random().nextInt(maxRandomInt);
+  static const maxRandomInt = 637 - 150;
+  final int _randomNumber = Random().nextInt(maxRandomInt) + 150;
   final AudioPlayer audioPlayer = AudioPlayer();
   String downloadURL = "";
   Stopwatch stopwatch = Stopwatch();
@@ -18,19 +18,24 @@ class AudioFile {
   }
 
   Future<void> _setdownloadUrl() async {
-    downloadURL = await FirebaseAudio().getSAudioFromPath(fileName);
+    try {
+      downloadURL = await FirebaseAudio().getSAudioFromPath(fileName);
+    } catch (e) {
+      print("Unable to fetch downloadUrl for $fileName");
+      print("error: " + e.toString());
+    }
   }
 
-  Future<int> get loadTime async {
-    if (_loadTime == 0) {
-      await _timeLoadAudio();
-    }
-    return _loadTime;
+  Future<int> get loadTime {
+    return _timeLoadAudio();
   }
 
   Future<int> _timeLoadAudio() async {
     if (downloadURL.isEmpty) {
       await _setdownloadUrl();
+      if (downloadURL.isEmpty) {
+        return 0;
+      }
     }
 
     stopwatch.reset();
@@ -40,9 +45,7 @@ class AudioFile {
     await audioPlayer.setUrl(downloadURL, preload: true);
     stopwatch.stop();
     _loadTime = stopwatch.elapsedMicroseconds;
-
-    print("Is loaded: $_loaded");
-    return loadTime;
+    return _loadTime;
   }
 
   void timeToPlay(Function notificationFn) async {
@@ -50,22 +53,30 @@ class AudioFile {
       await _timeLoadAudio();
     }
 
-    if (_timeToPlay != 0) {
-      notificationFn(_timeToPlay);
-      return;
-    }
+    bool hasNotified = false;
 
     void playAudioListener(PlayerState state) {
-      if (state.processingState == ProcessingState.ready) {
+      bool readyToPlay = !hasNotified &&
+          state.playing &&
+          state.processingState == ProcessingState.ready;
+
+      if (readyToPlay) {
         stopwatch.stop();
         _timeToPlay = stopwatch.elapsedMicroseconds;
         notificationFn(_timeToPlay);
+        hasNotified = true;
+      }
+
+      if (state.processingState == ProcessingState.completed) {
+        audioPlayer.stop();
       }
     }
 
     audioPlayer.playerStateStream.listen(playAudioListener);
+    stopwatch.stop();
     stopwatch.reset();
     stopwatch.start();
+
     playAudio();
   }
 
