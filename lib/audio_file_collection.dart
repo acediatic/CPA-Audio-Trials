@@ -11,7 +11,12 @@ class AudioFileCollection {
     }
   }
 
-  void listenForTimeToPlay(int audioIndex, Function notificationFunction) {
+  void listenForTimeToPlay(
+      int audioIndex, Function notificationFunction) async {
+    // stop all audio players
+    for (var audioFile in _audioFiles) {
+      await audioFile.stopAudio();
+    }
     _audioFiles[audioIndex].timeToPlay(notificationFunction);
   }
 
@@ -24,6 +29,7 @@ class AudioFileCollection {
     for (int i = 0; i < _audioFiles.length; i++) {
       loadTimeFutures.add(_audioFiles[i].loadTime);
     }
+
     return await Future.wait(loadTimeFutures);
   }
 
