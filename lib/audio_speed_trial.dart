@@ -15,12 +15,11 @@ class _AudioSpeedTrialPageState extends State<AudioSpeedTrialPage> {
   int _maxLoadTime = 0;
   int _timeToPlay = 0;
 
-  void updateTimeToPlay(int audioNumber) {
-    updateFunction(int timeToPlay) => setState(() {
-          _timeToPlay = timeToPlay;
-        });
-
-    _audioFileCollection.listenForTimeToPlay(audioNumber, updateFunction);
+  void updateTimeToPlay(int audioNumber) async {
+    int updatedTimeToPlay = await _audioFileCollection.timeToPlay(audioNumber);
+    setState(() {
+      _timeToPlay = updatedTimeToPlay;
+    });
   }
 
   void getLoadTimes() async {

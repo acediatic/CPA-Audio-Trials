@@ -11,13 +11,13 @@ class AudioFileCollection {
     }
   }
 
-  void listenForTimeToPlay(
-      int audioIndex, Function notificationFunction) async {
+  Future<int> timeToPlay(int audioIndex) async {
     // stop all audio players
     for (var audioFile in _audioFiles) {
       await audioFile.stopAudio();
     }
-    _audioFiles[audioIndex].timeToPlay(notificationFunction);
+
+    return _audioFiles[audioIndex].timeToPlay();
   }
 
   List<String> get fileNames {

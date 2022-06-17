@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:cpa_demo_app/firebase_audio_files.dart';
 import 'package:intl/intl.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:http/http.dart' as http;
+import 'package:audioplayers/audioplayers.dart';
 
 class AudioFile {
   static const maxRandomInt = 637 - 150;
@@ -12,6 +14,7 @@ class AudioFile {
   Stopwatch stopwatch = Stopwatch();
   int _loadTime = 0;
   int _timeToPlay = 0;
+  Uint8List audioBytes = Uint8List(0);
 
   AudioFile() {
     _setdownloadUrl();
@@ -30,6 +33,20 @@ class AudioFile {
     return _timeLoadAudio();
   }
 
+  Future<Uint8List> get audioData async {
+    if (audioBytes.lengthInBytes == 0) {
+      http.Client client = http.Client();
+      http.Response response = await client.get(Uri.parse(downloadURL));
+      if (response.statusCode == 200) {
+        audioBytes = response.bodyBytes;
+      } else {
+        throw Exception("Unable to fetch audio data");
+      }
+    }
+
+    return audioBytes;
+  }
+
   Future<int> _timeLoadAudio() async {
     if (downloadURL.isEmpty) {
       await _setdownloadUrl();
@@ -37,59 +54,49 @@ class AudioFile {
         return 0;
       }
     }
-
     stopwatch.reset();
     stopwatch.start();
 
-    // technically the time taken to get full duration, but a proxy for loading time
-    await audioPlayer.setUrl(downloadURL, preload: true);
+    await audioData;
+
     stopwatch.stop();
     _loadTime = stopwatch.elapsedMicroseconds;
     return _loadTime;
   }
 
-  void timeToPlay(Function notificationFn) async {
-    if (_loadTime == 0) {
-      await _timeLoadAudio();
-    }
-
-    bool hasNotified = false;
-
-    void playAudioListener(PlayerState state) {
-      bool readyToPlay = !hasNotified &&
-          state.playing &&
-          state.processingState == ProcessingState.ready;
-
-      if (readyToPlay) {
-        stopwatch.stop();
-        _timeToPlay = stopwatch.elapsedMicroseconds;
-        notificationFn(_timeToPlay);
-        hasNotified = true;
+  Future<int> timeToPlay() async {
+    if (_timeToPlay == 0) {
+      if (_loadTime == 0) {
+        await _timeLoadAudio();
       }
 
-      if (state.processingState == ProcessingState.completed) {
-        audioPlayer.stop();
+      if (audioBytes.lengthInBytes == 0) {
+        await audioData;
       }
+
+      await audioPlayer.stop();
+
+      stopwatch.stop();
+      stopwatch.reset();
+      stopwatch.start();
+
+      await audioPlayer.play(BytesSource(audioBytes));
+
+      stopwatch.stop();
+      _timeToPlay = stopwatch.elapsedMicroseconds;
+    } else {
+      await audioPlayer.stop();
+      await audioPlayer.resume();
     }
-
-    audioPlayer.playerStateStream.listen(playAudioListener);
-    stopwatch.stop();
-    stopwatch.reset();
-    stopwatch.start();
-
-    playAudio();
+    return _timeToPlay;
   }
 
   Future<void> playAudio() {
-    return audioPlayer.play();
+    return audioPlayer.resume();
   }
 
   Future<void> stopAudio() {
     return audioPlayer.stop();
-  }
-
-  void addProcessingStateListener(Function(PlayerState) function) {
-    audioPlayer.playerStateStream.listen(function);
   }
 
   String get fileName => "${_formatNumber(_randomNumber)}SA.mp3";
@@ -97,11 +104,4 @@ class AudioFile {
   String _formatNumber(int number) {
     return NumberFormat("000", 'en_US').format(number);
   }
-
-  // `true` if the `load()` action has been completed and an audio is currently
-  // `loaded` in the audioPlayer
-  bool get _loaded =>
-      audioPlayer.processingState == ProcessingState.ready ||
-      audioPlayer.processingState == ProcessingState.completed ||
-      audioPlayer.processingState == ProcessingState.buffering;
 }
