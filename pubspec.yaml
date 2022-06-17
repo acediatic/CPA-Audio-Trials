@@ -39,7 +39,8 @@ dependencies:
   firebase_auth: ^3.3.19
   google_sign_in: ^5.3.2
   collection: ^1.16.0
-  just_audio: ^0.9.24
+  http: ^0.13.4
+  audioplayers: ^1.0.0
 
 dev_dependencies:
   flutter_test:
